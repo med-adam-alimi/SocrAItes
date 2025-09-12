@@ -1,0 +1,12 @@
+# SAFE requirements - no heavy AI libraries that could crash your PC
+flask==2.3.3
+flask-cors==4.0.0
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Optional: Only if you want to try lightweight embeddings later
+# sentence-transformers==2.2.2
+# faiss-cpu==1.7.4
+
+# Development tools
+gunicorn==21.2.0

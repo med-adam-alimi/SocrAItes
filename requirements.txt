@@ -1,0 +1,16 @@
+flask==2.3.3
+flask-cors==4.0.0
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+numpy==1.24.3
+pandas==2.0.3
+python-dotenv==1.0.0
+gunicorn==21.2.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+nltk==3.8.1
+scikit-learn==1.3.0
+# Removed OpenAI - using FREE APIs instead!
+# torch==2.0.1 - Not needed for API calls
+# transformers==4.33.0 - Not needed for API calls
+# huggingface-hub==0.16.4 - Not needed for API calls

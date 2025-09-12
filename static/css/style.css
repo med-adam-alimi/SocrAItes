@@ -1,0 +1,229 @@
+/* AI Philosophy Chatbot Styles */
+
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --text-light: #ecf0f1;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    margin: 0;
+}
+
+.h-100 {
+    height: 100vh !important;
+}
+
+/* Sidebar Styles */
+.bg-dark {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-secondary {
+    background-color: var(--secondary-color) !important;
+}
+
+#philosopherSelect {
+    background-color: var(--secondary-color) !important;
+    border: 1px solid #495057 !important;
+}
+
+#philosopherSelect:focus {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+}
+
+/* Chat Messages */
+#chatMessages {
+    max-height: calc(100vh - 200px);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.message {
+    margin-bottom: 1rem;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message-content {
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 85%;
+    word-wrap: break-word;
+}
+
+.user-message .message-content {
+    background: linear-gradient(135deg, var(--accent-color), #2980b9);
+    color: white;
+    margin-left: auto;
+    text-align: right;
+}
+
+.bot-message .message-content {
+    background: white;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Sources */
+.sources {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+}
+
+.source-item {
+    font-size: 0.85em;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Topic Suggestions */
+.topic-btn {
+    font-size: 0.85em;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    text-align: left;
+    border: 1px solid #495057;
+    background: transparent;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.topic-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* Input Area */
+#messageInput {
+    border: 1px solid #ced4da;
+    padding: 12px;
+    font-size: 16px;
+}
+
+#messageInput:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+#sendMessage {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    padding: 12px 20px;
+}
+
+#sendMessage:hover {
+    background: #2980b9;
+    border-color: #2980b9;
+}
+
+#sendMessage:disabled {
+    background: #6c757d;
+    border-color: #6c757d;
+}
+
+/* Philosopher Info */
+#philosopherInfo {
+    border-left: 4px solid var(--accent-color);
+    transition: all 0.3s ease;
+}
+
+.philosopher-camus {
+    border-left-color: #e74c3c !important;
+}
+
+.philosopher-dostoevsky {
+    border-left-color: #9b59b6 !important;
+}
+
+.philosopher-nietzsche {
+    border-left-color: #f39c12 !important;
+}
+
+.philosopher-neutral {
+    border-left-color: var(--accent-color) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .col-md-3 {
+        min-height: auto;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+    
+    .col-md-9 {
+        min-height: 60vh;
+    }
+    
+    #chatMessages {
+        max-height: calc(60vh - 120px);
+    }
+}
+
+/* Scrollbar Styling */
+#chatMessages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatMessages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#chatMessages::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 3px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+/* Loading Animation */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background: #bdc3c7;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
