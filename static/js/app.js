@@ -1,109 +1,182 @@
-// AI Philosophy Chatbot JavaScript
-
-class PhilosophyChat {
+// SocrAItes - Modern Philosophy Chat Interface
+class SocrAItesChat {
     constructor() {
-        this.currentPhilosopher = 'neutral';
-        this.philosophers = {};
+        this.currentPhilosopher = 'camus';
         this.isLoading = false;
+        this.conversations = [];
         this.init();
     }
 
-    async init() {
-        await this.loadPhilosophers();
-        await this.loadTopics();
+    init() {
         this.setupEventListeners();
-        this.updatePhilosopherInfo();
-    }
-
-    async loadPhilosophers() {
-        try {
-            const response = await fetch('/api/philosophers');
-            this.philosophers = await response.json();
-        } catch (error) {
-            console.error('Error loading philosophers:', error);
-        }
-    }
-
-    async loadTopics() {
-        try {
-            const response = await fetch('/api/topics');
-            const topics = await response.json();
-            this.displayTopics(topics);
-        } catch (error) {
-            console.error('Error loading topics:', error);
-        }
-    }
-
-    displayTopics(topics) {
-        const container = document.getElementById('topicSuggestions');
-        container.innerHTML = '';
-        
-        topics.slice(0, 5).forEach(topic => {
-            const button = document.createElement('button');
-            button.className = 'btn topic-btn';
-            button.textContent = topic;
-            button.onclick = () => this.sendTopicMessage(topic);
-            container.appendChild(button);
-        });
+        this.showWelcomeScreen();
+        this.updatePhilosopher();
     }
 
     setupEventListeners() {
+        // Send button
+        const sendButton = document.getElementById('sendMessage');
+        const messageInput = document.getElementById('messageInput');
+        
+        if (sendButton && messageInput) {
+            sendButton.addEventListener('click', () => this.sendMessage());
+            
+            // Enter key handling
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            // Auto-resize textarea
+            messageInput.addEventListener('input', (e) => this.autoResizeTextarea(e));
+        }
+        
         // Philosopher selection
-        document.getElementById('philosopherSelect').addEventListener('change', (e) => {
-            this.currentPhilosopher = e.target.value;
-            this.updatePhilosopherInfo();
-        });
-
-        // Send message button
-        document.getElementById('sendMessage').addEventListener('click', () => {
-            this.sendMessage();
-        });
-
-        // Enter key in input
-        document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-
-        // Clear conversation
-        document.getElementById('clearConversation').addEventListener('click', () => {
-            this.clearConversation();
-        });
+        const philosopherSelect = document.getElementById('philosopherSelect');
+        if (philosopherSelect) {
+            philosopherSelect.addEventListener('change', (e) => {
+                this.currentPhilosopher = e.target.value;
+                this.updatePhilosopher();
+            });
+        }
     }
 
-    updatePhilosopherInfo() {
-        const philosopher = this.philosophers[this.currentPhilosopher];
+    autoResizeTextarea(e) {
+        const textarea = e.target;
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    showWelcomeScreen() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        // Clear any existing content
+        chatMessages.innerHTML = '';
+
+        // Create welcome message
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'welcome-screen';
+        welcomeDiv.innerHTML = `
+            <div class="welcome-title">Welcome to SocrAItes</div>
+            <div class="welcome-subtitle">
+                Dive deep into philosophical wisdom with AI-powered conversations. 
+                Explore life's biggest questions with history's greatest thinkers.
+            </div>
+            <div class="philosopher-cards">
+                <div class="philosopher-card" onclick="window.socraitesChat.selectPhilosopher('camus')">
+                    <div class="philosopher-name">Albert Camus</div>
+                    <div class="philosopher-description">Explore the absurd nature of existence and the human condition</div>
+                </div>
+                <div class="philosopher-card" onclick="window.socraitesChat.selectPhilosopher('nietzsche')">
+                    <div class="philosopher-name">Friedrich Nietzsche</div>
+                    <div class="philosopher-description">Challenge conventional morality and embrace radical thinking</div>
+                </div>
+                <div class="philosopher-card" onclick="window.socraitesChat.selectPhilosopher('dostoevsky')">
+                    <div class="philosopher-name">Fyodor Dostoevsky</div>
+                    <div class="philosopher-description">Delve into psychological depths and spiritual questioning</div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(welcomeDiv);
+    }
+
+    selectPhilosopher(philosopher) {
+        this.currentPhilosopher = philosopher;
+        
+        // Update dropdown
+        const philosopherSelect = document.getElementById('philosopherSelect');
+        if (philosopherSelect) {
+            philosopherSelect.value = philosopher;
+        }
+        
+        this.updatePhilosopher();
+        this.startConversation();
+    }
+
+    startConversation() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        // Clear welcome screen
+        chatMessages.innerHTML = '';
+
+        // Add initial message from philosopher
+        const welcomeText = this.getPhilosopherWelcome();
+        this.addAIMessage(welcomeText, this.getPhilosopherName());
+        
+        // Focus input
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) {
+            messageInput.focus();
+        }
+    }
+
+    getPhilosopherWelcome() {
+        const welcomes = {
+            'camus': 'Ah, another soul searching for meaning in this absurd existence. I am Camus, and I invite you to explore the fundamental questions of human life with me. What weighs on your mind today?',
+            'nietzsche': 'Welcome, fellow seeker of truth! I am Nietzsche, here to challenge your assumptions and push beyond conventional thinking. What sacred cows shall we examine today?',
+            'dostoevsky': 'Greetings, dear friend. I am Dostoevsky, and I sense the deep currents of human nature that flow within you. Let us explore the mysteries of the soul together. What troubles your spirit?'
+        };
+        return welcomes[this.currentPhilosopher] || 'Hello! I\'m here to discuss philosophy with you. What would you like to explore?';
+    }
+
+    updatePhilosopher() {
+        const philosophers = {
+            'camus': {
+                name: 'Albert Camus',
+                description: 'Existentialist & Absurdist',
+                avatar: 'AC'
+            },
+            'nietzsche': {
+                name: 'Friedrich Nietzsche',
+                description: 'Bold & Provocative',
+                avatar: 'FN'
+            },
+            'dostoevsky': {
+                name: 'Fyodor Dostoevsky',
+                description: 'Psychological & Spiritual',
+                avatar: 'FD'
+            }
+        };
+
+        const philosopher = philosophers[this.currentPhilosopher];
         if (philosopher) {
-            document.getElementById('philosopherName').textContent = philosopher.name;
-            document.getElementById('philosopherDescription').textContent = philosopher.description;
-            document.getElementById('philosopherPeriod').textContent = philosopher.period;
-            document.getElementById('currentPhilosopher').textContent = philosopher.name;
-            
-            // Update visual styling
-            const infoDiv = document.getElementById('philosopherInfo');
-            infoDiv.className = `mb-4 p-3 bg-secondary rounded philosopher-${this.currentPhilosopher}`;
+            console.log(`Switched to ${philosopher.name}`);
         }
     }
 
     async sendMessage() {
         const input = document.getElementById('messageInput');
-        const message = input.value.trim();
+        const sendButton = document.getElementById('sendMessage');
         
+        if (!input || !sendButton) {
+            console.error('Input elements not found');
+            return;
+        }
+
+        const message = input.value.trim();
+
         if (!message || this.isLoading) return;
 
-        // Clear input and disable sending
-        input.value = '';
-        this.setLoading(true);
+        // Disable input
+        this.isLoading = true;
+        input.disabled = true;
+        sendButton.disabled = true;
 
-        // Add user message to chat
-        this.addMessage(message, 'user');
+        // Add user message
+        this.addUserMessage(message);
+        input.value = '';
+        input.style.height = 'auto';
 
         // Show typing indicator
-        this.showTypingIndicator();
+        const typingIndicator = this.showTypingIndicator();
 
         try {
+            // Send request to backend
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
@@ -115,117 +188,134 @@ class PhilosophyChat {
                 })
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             
-            if (response.ok) {
-                this.hideTypingIndicator();
-                this.addMessage(data.response, 'bot', data.sources);
-            } else {
-                throw new Error(data.error || 'Something went wrong');
+            // Remove typing indicator
+            if (typingIndicator && typingIndicator.parentNode) {
+                typingIndicator.remove();
             }
+            
+            // Add AI response
+            this.addAIMessage(data.response, data.philosopher_name || this.getPhilosopherName());
+
         } catch (error) {
-            this.hideTypingIndicator();
-            this.addMessage('I apologize, but I encountered an error. Please try again.', 'bot');
-            console.error('Chat error:', error);
+            console.error('Error:', error);
+            if (typingIndicator && typingIndicator.parentNode) {
+                typingIndicator.remove();
+            }
+            this.addAIMessage('I apologize, but I encountered an error while processing your question. Please try again.', 'Error');
         } finally {
-            this.setLoading(false);
+            // Re-enable input
+            this.isLoading = false;
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
         }
     }
 
-    sendTopicMessage(topic) {
-        document.getElementById('messageInput').value = topic;
-        this.sendMessage();
-    }
-
-    addMessage(content, sender, sources = []) {
+    addUserMessage(message) {
         const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const messageElement = this.createMessage('user', message, 'You');
+        chatMessages.appendChild(messageElement);
+        this.scrollToBottom();
+    }
+
+    addAIMessage(message, philosopherName) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const messageElement = this.createMessage('ai', message, philosopherName);
+        chatMessages.appendChild(messageElement);
+        this.scrollToBottom();
+    }
+
+    createMessage(type, text, sender) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}-message`;
+        messageDiv.className = `message ${type}`;
 
-        const philosopherName = sender === 'bot' 
-            ? this.philosophers[this.currentPhilosopher]?.name || 'Philosophy Guide'
-            : 'You';
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = this.getAvatarText(type, sender);
 
-        let sourcesHtml = '';
-        if (sources && sources.length > 0) {
-            sourcesHtml = '<div class="sources"><small class="text-muted">Sources:</small>';
-            sources.forEach(source => {
-                sourcesHtml += `<div class="source-item">${source.text}</div>`;
-            });
-            sourcesHtml += '</div>';
-        }
+        const content = document.createElement('div');
+        content.className = 'message-content';
 
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                ${sender === 'bot' ? `<strong>${philosopherName}:</strong> ` : ''}
-                ${content}
-                ${sourcesHtml}
-            </div>
-        `;
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.textContent = text;
 
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        const meta = document.createElement('div');
+        meta.className = 'message-meta';
+        meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        content.appendChild(messageText);
+        content.appendChild(meta);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+
+        return messageDiv;
+    }
+
+    getAvatarText(type, sender) {
+        if (type === 'user') return 'You';
+        
+        const avatars = {
+            'Albert Camus': 'AC',
+            'Friedrich Nietzsche': 'FN',
+            'Fyodor Dostoevsky': 'FD',
+            'AI Guide': 'AI'
+        };
+        
+        return avatars[sender] || sender.substring(0, 2).toUpperCase();
+    }
+
+    getPhilosopherName() {
+        const names = {
+            'camus': 'Albert Camus',
+            'nietzsche': 'Friedrich Nietzsche',
+            'dostoevsky': 'Fyodor Dostoevsky'
+        };
+        return names[this.currentPhilosopher] || 'Philosophy Guide';
     }
 
     showTypingIndicator() {
         const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return null;
+
         const typingDiv = document.createElement('div');
-        typingDiv.id = 'typingIndicator';
+        typingDiv.className = 'message ai typing-indicator';
         typingDiv.innerHTML = `
-            <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="message-avatar">
+                ${this.getAvatarText('ai', this.getPhilosopherName())}
+            </div>
+            <div class="message-content">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
             </div>
         `;
         chatMessages.appendChild(typingDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        this.scrollToBottom();
+        return typingDiv;
     }
 
-    hideTypingIndicator() {
-        const typingIndicator = document.getElementById('typingIndicator');
-        if (typingIndicator) {
-            typingIndicator.remove();
-        }
-    }
-
-    setLoading(loading) {
-        this.isLoading = loading;
-        const sendButton = document.getElementById('sendMessage');
-        const messageInput = document.getElementById('messageInput');
-        
-        sendButton.disabled = loading;
-        messageInput.disabled = loading;
-        
-        if (loading) {
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        } else {
-            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
-        }
-    }
-
-    async clearConversation() {
-        try {
-            await fetch('/api/clear_conversation', { method: 'POST' });
-            
-            // Clear chat messages except welcome message
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = `
-                <div class="message bot-message">
-                    <div class="message-content">
-                        <strong>Philosophy Guide:</strong> Welcome! I'm here to discuss philosophical questions with you. 
-                        Choose a philosopher from the sidebar to chat with their persona, or stick with me for general philosophical exploration.
-                        What would you like to discuss today?
-                    </div>
-                </div>
-            `;
-        } catch (error) {
-            console.error('Error clearing conversation:', error);
+    scrollToBottom() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
 }
 
-// Initialize the chat application when DOM is loaded
+// Initialize the chat when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new PhilosophyChat();
+    window.socraitesChat = new SocrAItesChat();
 });
