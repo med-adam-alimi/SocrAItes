@@ -91,11 +91,7 @@ SocrAItes is a sophisticated Flask web application that combines **Retrieval Aug
    python run.py
    ```
 
-6. **Access the application**
-   ```
-   🌐 Local: http://localhost:5000
-   🌐 Network: http://192.168.x.x:5000
-   ```
+
 
 ## 🔧 Dependencies & Tech Stack
 
@@ -490,17 +486,15 @@ pip install -r requirements_safe.txt
 
 ## 📞 Support & Community
 
-- **Issues**: [GitHub Issues](https://github.com/med-adam-alimi/SocrAItes/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/med-adam-alimi/SocrAItes/discussions)
-- **Documentation**: [Wiki](https://github.com/med-adam-alimi/SocrAItes/wiki)
-- **Email**: adam.alimi@example.com
+- **Email**: mohamed.adam.alimi@gmail.com
+- **Linkedin**:https://www.linkedin.com/in/mohamed-adam-alimi-99ba02284/
 
 ## �📜 License
 
 ```
 MIT License
 
-Copyright (c) 2025 Adam Alimi
+Copyright (c) 2025 Mohamed Adam Alimi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -521,15 +515,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 🎯 Quick Links
 
-- 🚀 **[Live Demo](http://localhost:5000)** - Try it now!
-- 📖 **[Documentation](./docs/)** - Comprehensive guides
-- 🐛 **[Report Issues](https://github.com/med-adam-alimi/SocrAItes/issues)** - Help us improve
-- 💡 **[Feature Requests](https://github.com/med-adam-alimi/SocrAItes/discussions)** - Share your ideas
-- 🤝 **[Contributing](./CONTRIBUTING.md)** - Join the project
-
----
 
 **Ready to explore the depths of human thought with AI? Start your philosophical journey today! 🌟**
 
