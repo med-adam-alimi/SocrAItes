@@ -1,258 +1,324 @@
 # 🧠 SocrAItes - AI Philosophy Chatbot
 
-> An intelligent philosophy chatbot that embodies the wisdom of history's greatest thinkers using RAG (Retrieval Augmented Generation) and modern AI.
+**Experience philosophical wisdom through AI-powered conversations with history's greatest thinkers.**
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com)
-[![Groq](https://img.shields.io/badge/AI-Groq%20Llama%203.1-orange.svg)](https://groq.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+SocrAItes is a sophisticated Flask web application that combines **Retrieval Augmented Generation (RAG)** with **modern AI models** to create authentic philosophical discussions. Engage with AI-powered philosopher personas that draw from real philosophical texts and contemporary internet sources to provide thoughtful, contextually rich responses.
 
-## 🎭 Meet the Philosophers
-
-Chat with 6 legendary thinkers, each with their unique perspective:
-
-- **🌅 Albert Camus** - Existentialist rebel exploring absurdity and meaning
-- **📚 Fyodor Dostoevsky** - Master of human psychology and moral complexity  
-- **⚡ Friedrich Nietzsche** - Bold critic challenging traditional values
-- **🏛️ Socrates** - Wise questioner seeking truth through dialogue
-- **🔍 Franz Kafka** - Surreal explorer of modern alienation
-- **🌑 Emil Cioran** - Pessimistic philosopher of existence and despair
-
-## 🏗️ System Architecture
+## 🏗️ Backend Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend Interface                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   HTML/CSS/JS   │  │  Bootstrap UI   │  │ Streaming Chat  │ │
-│  │   Templates     │  │   Components    │  │   Interface     │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                    SocrAItes AI Philosophy Chatbot              │
 └─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend UI   │    │  Flask Routes   │    │  AI Orchestrator│
+│                 │    │                 │    │                 │
+│ • Chat Interface│◄──►│ • /api/chat     │◄──►│ • Groq Models   │
+│ • Philosopher   │    │ • /api/stream   │    │ • HuggingFace   │
+│   Selection     │    │ • Static Assets │    │ • OpenAI (opt)  │
+│ • Streaming UI  │    │ • Error Handler │    │ • Model Router  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                    ┌─────────────────┐    ┌─────────────────┐
+                    │ Internet RAG    │    │ Local Knowledge │
+                    │ Engine          │    │ Base            │
+                    │                 │    │                 │
+                    │ • Web Search    │    │ • FAISS Vector  │
+                    │ • Reddit API    │    │   Database      │
+                    │ • Philosophy    │    │ • Philosophy    │
+                    │   Sources       │    │   Texts         │
+                    │ • Stanford SEP  │    │ • Embeddings    │
+                    │ • Fast Mode     │    │ • Semantic      │
+                    └─────────────────┘    │   Search        │
+                              │            └─────────────────┘
+                              ▼                        │
+                    ┌─────────────────┐                │
+                    │ External APIs   │                │
+                    │                 │                │
+                    │ • Serper/Google │◄───────────────┘
+                    │ • DuckDuckGo    │
+                    │ • Reddit        │
+                    │ • Phil Sources  │
+                    └─────────────────┘
+
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Flask Backend                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   API Routes    │  │ Session Manager │  │ Error Handling  │ │
-│  │ /api/chat/stream│  │ & Optimization  │  │ & Logging       │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Philosophy Chat Engine                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ Groq Llama 3.1  │  │ Philosopher     │  │ Fast Mode       │ │
-│  │ 8B Model (FREE) │  │ Personas        │  │ Optimization    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Internet RAG Engine                         │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ Web Search APIs │  │ Academic Sources│  │ Philosophy DBs  │ │
-│  │ (DuckDuckGo)    │  │ (Reddit/Forums) │  │ (Stanford/IEP)  │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ Content Ranking │  │ Source Citation │  │ Fast Retrieval  │ │
-│  │ & Filtering     │  │ & Verification  │  │ (3-5 sources)   │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Local Data Store                          │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │ Philosophy Texts│  │ FAISS Vector DB │  │ Processed       │ │
-│  │ (Camus, Kafka   │  │ Embeddings      │  │ Text Chunks     │ │
-│  │ Nietzsche, etc.)│  │ Index           │  │ & Metadata      │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                        Data Flow                                │
+│                                                                 │
+│ User Query → RAG Search → Context Retrieval → AI Generation    │
+│           ↓              ↓                   ↓               ↓  │
+│     • Internet Sources • Local Texts     • Philosopher    • Stream │
+│     • Fast Mode (3s)   • FAISS DB        • Persona       • Response │
+│     • 3-5 Sources      • Embeddings      • Optimized     • Browser │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## ⚡ Performance Features
+## ✨ Key Features
 
-- **🚀 Ultra-Fast Responses**: 2-3 seconds (optimized from 10+ seconds)
-- **💬 Streaming Chat**: Real-time text display like ChatGPT
-- **🧠 Smart RAG**: 3-5 relevant sources (reduced from 40-80)
-- **⚡ Fast Mode**: Optimized search algorithms
-- **🔄 Session Management**: Efficient memory usage
-- **📱 Responsive UI**: Bootstrap-powered interface
+### 🎭 **6 Authentic Philosopher Personas**
+- **Albert Camus** - Existentialism, Absurdism, and the Human Condition  
+- **Fyodor Dostoevsky** - Psychology, Morality, and Human Nature
+- **Friedrich Nietzsche** - Will to Power, Ethics, and Cultural Critique
+- **Socrates** - Classical Philosophy and the Socratic Method
+- **Franz Kafka** - Existential Anxiety, Bureaucracy, and Alienation
+- **Emil Cioran** - Pessimism, Nihilism, and the Human Condition
 
-## 🛠️ Tech Stack
+### 🔍 **Advanced RAG System**
+- **Dual Knowledge Sources**: Philosophy texts + real-time internet search
+- **FAISS Vector Database**: Fast semantic similarity search  
+- **Intelligent Context Retrieval**: Finds relevant sources per query
+- **Philosophy-Specific Sources**: Stanford Encyclopedia, IEP, Philosophy Basics
+- **Fast Mode**: 2-3 second responses with optimized searches
+- **Source Citations**: Transparent references for all responses
 
-### Backend
-- **Python 3.8+** - Core language
-- **Flask** - Web framework with SSE streaming
-- **Groq API** - Llama 3.1 8B model (FREE & FAST)
-- **FAISS** - Vector similarity search
-- **Sentence Transformers** - Text embeddings
+### ⚡ **Modern AI Integration**
+- **Groq API**: Lightning-fast inference with Llama 3.1 8B (FREE)
+- **Internet RAG**: Real-time web search for contemporary discussions
+- **Multiple AI Backends**: OpenAI, Hugging Face, Ollama support
+- **Streaming Responses**: ChatGPT-style real-time text generation
+- **Fallback Systems**: Robust error handling and model switching
 
-### Frontend  
-- **HTML5/CSS3/JavaScript** - Modern web standards
-- **Bootstrap 5** - Responsive UI framework
-- **Server-Sent Events** - Real-time streaming
-
-### AI/ML
-- **Internet RAG Engine** - Multi-source knowledge retrieval
-- **Philosophy Databases** - Stanford Encyclopedia, Internet Encyclopedia
-- **Academic Sources** - Reddit Philosophy, Academic Papers
-- **Web Search APIs** - DuckDuckGo, Google Custom Search
+### 🎨 **ChatGPT-Style Interface**
+- **Dark Modern Theme**: GitHub-inspired sophisticated design
+- **Welcome Screen**: Engaging philosopher selection with animations
+- **Streaming Chat**: Real-time message bubbles with progressive text
+- **Responsive Design**: Perfect on desktop, tablet, and mobile
+- **Session Management**: Optimized conversation history
 
 ## 🚀 Quick Start
 
-### 1. Clone & Setup
-```bash
-git clone https://github.com/med-adam-alimi/SocrAItes.git
-cd SocrAItes
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+### Prerequisites
+- **Python 3.8+** - Modern Python with asyncio support
+- **Git** - For cloning and version control
+- **4GB+ RAM** - For optimal performance with embeddings
+- **Internet Connection** - For real-time RAG searches
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/med-adam-alimi/SocrAItes.git
+   cd SocrAItes
+   ```
+
+2. **Set up virtual environment**
+   ```bash
+   python -m venv .venv
+   
+   # Windows
+   .venv\Scripts\activate
+   
+   # Linux/Mac
+   source .venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   # For full internet-enabled version (recommended)
+   pip install -r requirements_internet.txt
+   
+   # OR for safe offline version  
+   pip install -r requirements_safe.txt
+   ```
+
+4. **Configure API Keys** (Optional - works without)
+   ```bash
+   # Create .env file
+   touch .env  # Linux/Mac
+   echo. > .env  # Windows
+   
+   # Add your API keys (all optional):
+   GROQ_API_KEY=your_groq_api_key_here    # Get free at console.groq.com
+   OPENAI_API_KEY=your_openai_api_key_here
+   SERPER_API_KEY=your_serper_api_key_here # For web search
+   ```
+
+5. **Run the application**
+   ```bash
+   python run.py
+   ```
+
+6. **Open your browser**
+   ```
+   http://localhost:5000
+   ```
+
+## 🎯 Usage Examples
+
+### Basic Chat
+```
+User: "What is the meaning of life?"
+Camus: "Life has no inherent meaning, but we must create our own. The absurd condition of existence - the disconnect between our need for meaning and the universe's silence - is not something to escape but to embrace..."
 ```
 
-### 2. Configure Environment
-```bash
-# Create .env file with your API keys
-echo "GROQ_API_KEY=your_groq_api_key_here" > .env
-echo "GOOGLE_API_KEY=your_google_api_key" >> .env
-echo "SERPER_API_KEY=your_serper_api_key" >> .env
+### Philosophical Debate
+```
+User: "Is suffering necessary for growth?"
+Dostoevsky: "Suffering is the sole origin of consciousness. Through pain, we discover the depths of our humanity and the complexity of moral choice..."
 ```
 
-### 3. Initialize Data
-```bash
-python scripts/prepare_data.py
+### Modern Context
+```
+User: "How should we deal with social media anxiety?"
+Kierkegaard: "The present age suffers from the anxiety of too many possibilities. Social media amplifies this dread by presenting infinite choices and comparisons..."
 ```
 
-### 4. Run Application
+## 🔧 Technical Architecture
+
+### Core Components
+
+#### 1. **Flask Application** (`app/`)
+- **routes.py**: API endpoints, streaming responses, session management
+- **models.py**: Data models and philosopher configurations
+- **ai_models.py**: AI model abstractions and routing
+
+#### 2. **AI Engine** (`app/utils/`)
+- **groq_philosophy_chat.py**: Main AI orchestrator with Groq integration
+- **internet_rag_engine.py**: Real-time web search and content retrieval
+- **rag_engine.py**: Local knowledge base with FAISS vector search
+
+#### 3. **Data Pipeline** (`data/`)
+- **raw/**: Original philosophy texts and metadata
+- **processed/**: Preprocessed chunks and FAISS embeddings
+
+#### 4. **Frontend** (`static/`, `templates/`)
+- **JavaScript**: Streaming chat interface, philosopher selection
+- **CSS**: Modern dark theme, responsive design
+- **HTML**: Single-page application structure
+
+### Performance Optimizations
+
+#### 🚀 **Speed Improvements**
+- **Fast Mode**: 2-3 second responses (down from 10+ seconds)
+- **Limited Sources**: 3-5 sources instead of 40-80
+- **Optimized Prompts**: Reduced token usage by 60%
+- **Session Caching**: Conversation history optimization
+
+#### 🔄 **Reliability Features**
+- **Multiple AI Backends**: Automatic fallback between Groq, OpenAI, HuggingFace
+- **Error Handling**: Graceful degradation with informative messages
+- **Rate Limiting**: Built-in protections for API limits
+- **Timeout Management**: Prevents hanging requests
+
+## 🧪 Testing
+
+### Quick Test
 ```bash
-python run.py
+python test_quick.py
 ```
 
-Visit `http://localhost:5000` and start chatting with philosophers! 🎭
+### Performance Test
+```bash
+python test_performance.py
+```
+
+### Manual Testing
+```bash
+python test_manual.py
+```
+
+### Comprehensive Test
+```bash
+python test_comprehensive.py
+```
+
+## 🔧 Dependencies & Tech Stack
+
+### **Core Framework**
+```python
+Flask==3.0.3              # Web framework
+Flask-CORS==4.0.1          # Cross-origin requests
+```
+
+### **AI & Machine Learning**
+```python
+# Vector Search & Embeddings
+faiss-cpu==1.8.0           # Facebook AI similarity search
+sentence-transformers==3.0.1  # Sentence embeddings
+transformers==4.44.2       # Hugging Face transformers
+
+# AI API Integrations  
+groq==0.9.0               # Groq AI API (FREE & FAST)
+openai==1.40.6            # OpenAI GPT models
+```
+
+### **Internet RAG System**
+```python
+# Web Scraping & Search
+requests==2.32.3          # HTTP requests
+beautifulsoup4==4.12.3    # HTML parsing
+duckduckgo-search==6.2.4  # Privacy-focused search
+```
+
+### **Data Processing**
+```python
+numpy==2.1.0              # Numerical computing
+python-dotenv==1.0.1      # Environment variables
+tqdm==4.66.5              # Progress bars
+```
 
 ## 📁 Project Structure
 
 ```
 SocrAItes/
-├── 📱 Frontend
-│   ├── templates/          # HTML templates
-│   └── static/            # CSS, JS, assets
-├── 🔧 Backend  
-│   ├── app/
-│   │   ├── routes.py      # API endpoints
-│   │   ├── ai_models.py   # AI engine loader
-│   │   └── utils/         # Core engines
-│   │       ├── groq_philosophy_chat.py
-│   │       └── internet_rag_engine.py
-├── 📚 Data
-│   ├── raw/               # Philosophy texts
-│   └── processed/         # Embeddings & chunks
-├── 🧪 Tests
-│   └── test_*.py          # Comprehensive tests
-└── 📜 Scripts
-    └── prepare_data.py    # Data preprocessing
+├── app/
+│   ├── __init__.py           # Flask app factory
+│   ├── routes.py             # API endpoints & streaming
+│   ├── models.py             # Data models
+│   ├── ai_models.py          # AI model management
+│   └── utils/
+│       ├── groq_philosophy_chat.py    # Main AI engine
+│       ├── internet_rag_engine.py     # Web search RAG
+│       ├── rag_engine.py              # Local knowledge base
+│       └── advanced_hf_chat.py        # HuggingFace integration
+├── data/
+│   ├── raw/                  # Original philosophy texts
+│   └── processed/            # FAISS embeddings & chunks
+├── static/
+│   ├── css/style.css         # Modern dark theme
+│   └── js/app.js             # Streaming chat interface
+├── templates/
+│   └── index.html            # Single-page application
+├── tests/
+│   ├── test_quick.py         # Fast functionality test
+│   ├── test_performance.py   # Speed benchmarks
+│   └── test_comprehensive.py # Full system test
+├── scripts/
+│   └── prepare_data.py       # Data preprocessing
+├── requirements_internet.txt  # Full dependencies
+├── requirements_safe.txt     # Offline version
+├── run.py                    # Application entry point
+└── README.md                 # This file
 ```
-
-## 🎯 Key Features
-
-### 🤖 Intelligent Conversations
-- Each philosopher has unique personality and knowledge
-- Contextual responses based on their actual works
-- Natural conversation flow without repetitive introductions
-
-### 🔍 Advanced RAG System
-- **Multi-Source Search**: Web, academic papers, philosophy databases
-- **Smart Ranking**: Relevance-based content prioritization  
-- **Fast Retrieval**: Optimized for 2-3 second responses
-- **Source Citations**: Transparent knowledge sourcing
-
-### 💻 Modern Interface
-- **Streaming Responses**: Text appears progressively like ChatGPT
-- **Responsive Design**: Works on desktop, tablet, mobile
-- **Error Handling**: Graceful fallbacks and user feedback
-- **Session Management**: Efficient conversation tracking
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Quick functionality test
-python test_quick.py
-
-# Performance testing
-python test_performance.py
-
-# API connectivity test
-python test_api.py
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-GROQ_API_KEY=gsk_...        # Free Groq API key
-GOOGLE_API_KEY=AIza...      # Google Custom Search (optional)
-SERPER_API_KEY=...          # Serper API for web search (optional)
-```
-
-### Performance Tuning
-- **Fast Mode**: Reduces sources from 40-80 to 3-5
-- **Session Optimization**: Efficient memory management
-- **Streaming**: Real-time response delivery
-- **Caching**: Local embeddings for faster lookup
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+1. **Fork the repository**
+2. **Create feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit changes**: `git commit -m 'Add amazing feature'`
+4. **Push to branch**: `git push origin feature/amazing-feature`
+5. **Open Pull Request**
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🎓 Philosophy Sources
+## 🔗 Links
 
-- **Classical Texts**: Original works of featured philosophers
-- **Stanford Encyclopedia of Philosophy**: Comprehensive academic articles
-- **Internet Encyclopedia of Philosophy**: Peer-reviewed philosophical content
-- **Academic Papers**: Current philosophical research and analysis
-- **Philosophy Forums**: Contemporary discussions and interpretations
+- **Repository**: [GitHub](https://github.com/med-adam-alimi/SocrAItes)
+- **Demo**: [Live Demo](https://your-demo-link.com)
+- **Documentation**: [Wiki](https://github.com/med-adam-alimi/SocrAItes/wiki)
 
-## 🚀 Deployment Options
+## 🙏 Acknowledgments
 
-### Local Development
-```bash
-python run.py  # Development server on localhost:5000
-```
-
-### Production Deployment
-- **Heroku**: Ready for deployment with Procfile
-- **Docker**: Containerized deployment option
-- **AWS/GCP**: Cloud platform deployment
-- **Hugging Face Spaces**: AI model hosting platform
-
-## 📊 Performance Metrics
-
-- **Response Time**: 2-3 seconds (optimized from 10+ seconds)
-- **Source Retrieval**: 3-5 sources (reduced from 40-80)
-- **Memory Usage**: Optimized session management
-- **Error Rate**: < 1% with comprehensive error handling
-- **Uptime**: 99.9% availability with proper deployment
+- **Philosophy Texts**: Various public domain philosophical works
+- **AI Models**: Groq, OpenAI, Hugging Face communities
+- **Vector Search**: Facebook AI's FAISS library
+- **Web Framework**: Flask development team
 
 ---
 
-<div align="center">
+**Made with ❤️ by the SocrAItes team**
 
-**🧠 Engage with the greatest minds in human history**
-
-*SocrAItes brings philosophy to the digital age*
-
-[⭐ Star this repo](https://github.com/med-adam-alimi/SocrAItes) • [🐛 Report Bug](https://github.com/med-adam-alimi/SocrAItes/issues) • [✨ Request Feature](https://github.com/med-adam-alimi/SocrAItes/issues)
-
-</div>
+*"The unexamined life is not worth living." - Socrates*
