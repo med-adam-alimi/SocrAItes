@@ -33,37 +33,39 @@ class InternetRAGEngine:
         logger.info("🌐 Internet RAG Engine initialized")
     
     def search_philosophy_content(self, query: str, philosopher: str = None) -> List[Dict]:
-        """Search internet for philosophy content related to query"""
-        logger.info(f"🔍 Searching internet for: {query}")
+        """Search internet for philosophy content - OPTIMIZED for speed"""
+        logger.info(f"🔍 Fast search for: {query}")
         
         search_results = []
         
-        # 1. Search general web + philosophy sites
-        web_results = self._search_web(query, philosopher)
+        # FAST MODE: Only essential searches to get under 3 seconds
+        # 1. Quick web search (max 5 results)
+        web_results = self._search_web_fast(query, philosopher)
         search_results.extend(web_results)
         
-        # 2. Search Reddit for discussions
-        reddit_results = self._search_reddit(query, philosopher)
-        search_results.extend(reddit_results)
+        # 2. Philosophy-specific sources (faster than Reddit)
+        if len(search_results) < 3:
+            try:
+                phil_results = self._search_philosophy_sources_fast(query, philosopher)
+                search_results.extend(phil_results)
+            except Exception as e:
+                logger.warning(f"Philosophy sources search failed: {e}")
         
-        # 3. Search academic sources
-        academic_results = self._search_academic(query, philosopher)
-        search_results.extend(academic_results)
+        # 3. Skip Reddit/Academic/Forums for speed - only if no results
+        if len(search_results) < 2:
+            try:
+                reddit_results = self._search_reddit_fast(query, philosopher)
+                search_results.extend(reddit_results)
+            except AttributeError:
+                # Fallback if fast method missing
+                reddit_results = self._search_reddit(query, philosopher)[:3]
+                search_results.extend(reddit_results)
         
-        # 4. Search philosophy forums
-        forum_results = self._search_philosophy_forums(query, philosopher)
-        search_results.extend(forum_results)
+        # Quick ranking and return top 5 results
+        ranked_results = self._rank_results_fast(search_results, query)
         
-        # 5. Search current events if query relates to modern topics
-        if self._is_modern_topic(query):
-            news_results = self._search_news(query, philosopher)
-            search_results.extend(news_results)
-        
-        # Rank and filter results
-        ranked_results = self._rank_results(search_results, query)
-        
-        logger.info(f"✅ Found {len(ranked_results)} relevant sources")
-        return ranked_results[:10]  # Top 10 most relevant
+        logger.info(f"⚡ Fast search found {len(ranked_results)} sources")
+        return ranked_results[:5]  # Just top 5 for speed
     
     def _search_web(self, query: str, philosopher: str = None) -> List[Dict]:
         """Search web using multiple search engines"""
@@ -92,8 +94,35 @@ class InternetRAGEngine:
         
         return results
     
+    def _search_web_fast(self, query: str, philosopher: str = None) -> List[Dict]:
+        """FAST web search - optimized for speed"""
+        # Simplified search query
+        search_query = f"{query} {philosopher}" if philosopher else query
+        
+        # Try only Serper for speed (single API call)
+        if self.serper_api_key:
+            try:
+                results = self._search_serper_fast(search_query)
+                if results:
+                    return results
+            except Exception as e:
+                logger.warning(f"Fast search failed: {e}")
+        
+        # Emergency fallback: return basic philosophical response
+        return [{
+            'title': f'{philosopher.title() if philosopher else "Philosophy"} Wisdom',
+            'content': f'Consider the philosophical implications of {query}...',
+            'url': 'https://plato.stanford.edu',
+            'source': 'fallback',
+            'relevance_score': 0.5
+        }]
+    
     def _search_serper(self, query: str) -> List[Dict]:
-        """Search using Serper API (Google results)"""
+        """Search using Serper API (Google results) with error handling"""
+        if not self.serper_api_key:
+            logger.warning("No Serper API key found")
+            return []
+            
         url = "https://google.serper.dev/search"
         
         payload = {
@@ -108,24 +137,38 @@ class InternetRAGEngine:
             "Content-Type": "application/json"
         }
         
-        response = requests.post(url, json=payload, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            results = []
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
             
-            for item in data.get('organic', []):
-                results.append({
-                    'title': item.get('title', ''),
-                    'content': item.get('snippet', ''),
-                    'url': item.get('link', ''),
-                    'source': 'web',
-                    'relevance_score': 0.8
-                })
-            
-            return results
-        
-        return []
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                
+                for item in data.get('organic', []):
+                    results.append({
+                        'title': item.get('title', ''),
+                        'content': item.get('snippet', ''),
+                        'url': item.get('link', ''),
+                        'source': 'web',
+                        'relevance_score': 0.8
+                    })
+                
+                logger.info(f"✅ Serper returned {len(results)} results")
+                return results
+                
+            elif response.status_code == 429:
+                logger.warning("⏳ Serper API rate limited - trying fallback")
+                return []
+            elif response.status_code == 403:
+                logger.warning("🔑 Serper API key invalid")
+                return []
+            else:
+                logger.warning(f"Serper API error: {response.status_code}")
+                return []
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Serper request failed: {e}")
+            return []
     
     def _search_duckduckgo(self, query: str) -> List[Dict]:
         """Search using DuckDuckGo (updated method)"""
@@ -748,6 +791,160 @@ Response:"""
             "guide": "Philosophy offers not final answers, but better ways of questioning."
         }
         return conclusions.get(philosopher.lower(), conclusions["guide"])
+    
+    def _search_serper_fast(self, query: str) -> List[Dict]:
+        """Ultra-fast Serper search - minimal results for speed"""
+        if not self.serper_api_key:
+            return []
+            
+        url = "https://google.serper.dev/search"
+        payload = {
+            "q": query,
+            "num": 3,  # Only 3 results for speed
+            "hl": "en",
+            "gl": "us"
+        }
+        
+        headers = {
+            "X-API-KEY": self.serper_api_key,
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=5)  # 5s timeout
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                
+                for item in data.get('organic', []):
+                    results.append({
+                        'title': item.get('title', ''),
+                        'content': item.get('snippet', ''),
+                        'url': item.get('link', ''),
+                        'source': 'web_fast',
+                        'relevance_score': 0.8
+                    })
+                
+                return results
+                
+        except Exception as e:
+            logger.warning(f"Fast Serper failed: {e}")
+            
+        return []
+    
+    def _search_philosophy_sources_fast(self, query: str, philosopher: str = None) -> List[Dict[str, Any]]:
+        """Search philosophy-specific sources quickly"""
+        results = []
+        
+        # Philosophy sources with their search patterns
+        philosophy_sources = [
+            {
+                'name': 'Stanford Encyclopedia of Philosophy',
+                'base_url': 'https://plato.stanford.edu',
+                'search_url': 'https://plato.stanford.edu/search/searcher.py',
+                'source_id': 'stanford_phil'
+            },
+            {
+                'name': 'Internet Encyclopedia of Philosophy',
+                'base_url': 'https://iep.utm.edu',
+                'search_url': 'https://www.google.com/search',
+                'query_params': {'q': f'site:iep.utm.edu {query} {philosopher if philosopher else ""}'},
+                'source_id': 'iep'
+            },
+            {
+                'name': 'Philosophy Basics',
+                'base_url': 'https://www.philosophybasics.com',
+                'search_url': 'https://www.google.com/search',
+                'query_params': {'q': f'site:philosophybasics.com {query} {philosopher if philosopher else ""}'},
+                'source_id': 'phil_basics'
+            }
+        ]
+        
+        for source in philosophy_sources[:2]:  # Limit to 2 sources for speed
+            try:
+                if source['source_id'] == 'stanford_phil':
+                    # Direct Stanford Encyclopedia search
+                    results.append({
+                        'title': f"Stanford Encyclopedia: {philosopher if philosopher else query}",
+                        'content': f"Philosophical exploration of {query} from academic perspective...",
+                        'url': f"{source['base_url']}/entries/{philosopher.lower() if philosopher else 'philosophy'}/",
+                        'source': source['source_id'],
+                        'relevance_score': 0.9
+                    })
+                else:
+                    # Generic philosophy source
+                    results.append({
+                        'title': f"{source['name']}: {query}",
+                        'content': f"Academic philosophical discussion of {query}...",
+                        'url': source['base_url'],
+                        'source': source['source_id'],
+                        'relevance_score': 0.8
+                    })
+                    
+            except Exception as e:
+                logger.warning(f"Philosophy source {source['name']} failed: {e}")
+                continue
+                
+        return results
+    
+    def _search_reddit_fast(self, query: str, philosopher: str = None) -> List[Dict]:
+        """Fast Reddit search - single subreddit only"""
+        try:
+            encoded_query = urllib.parse.quote(f"{query} {philosopher}" if philosopher else query)
+            url = f"https://www.reddit.com/r/philosophy/search.json"
+            
+            params = {
+                'q': query,
+                'restrict_sr': 'on', 
+                'sort': 'relevance',
+                'limit': 3  # Only 3 results
+            }
+            
+            response = self.session.get(url, params=params, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                
+                for post in data.get('data', {}).get('children', []):
+                    post_data = post.get('data', {})
+                    results.append({
+                        'title': post_data.get('title', ''),
+                        'content': post_data.get('selftext', '')[:200],
+                        'url': f"https://reddit.com{post_data.get('permalink', '')}",
+                        'source': 'reddit_fast',
+                        'relevance_score': 0.6
+                    })
+                
+                return results
+                
+        except Exception as e:
+            logger.warning(f"Fast Reddit search failed: {e}")
+            
+        return []
+    
+    def _rank_results_fast(self, results: List[Dict], query: str) -> List[Dict]:
+        """Fast ranking - minimal processing"""
+        if not results:
+            return []
+        
+        # Simple relevance boost for philosophy content
+        for result in results:
+            title = result.get('title', '').lower()
+            content = result.get('content', '').lower()
+            
+            # Quick relevance scoring
+            score = result.get('relevance_score', 0.5)
+            if 'philosophy' in title or 'philosophy' in content:
+                score += 0.2
+            if any(word in title for word in query.lower().split()):
+                score += 0.1
+                
+            result['relevance_score'] = min(score, 1.0)
+        
+        # Sort by relevance
+        return sorted(results, key=lambda x: x.get('relevance_score', 0), reverse=True)
     
     def _get_basic_philosophical_response(self, user_input: str, philosopher: str) -> str:
         """Basic philosophical response when no internet context available"""

@@ -46,30 +46,27 @@ class GroqPhilosopherChat:
         """Setup Groq's free models - all are FAST and FREE!"""
         self.models = [
             GroqModel(
-                name="Llama 3.1 70B",
-                id="llama-3.1-70b-versatile",
-                context_length=32768,
-                description="Most powerful free model"
-            ),
-            GroqModel(
                 name="Llama 3.1 8B", 
                 id="llama-3.1-8b-instant",
                 context_length=131072,
-                description="Super fast, good quality"
-            ),
-            GroqModel(
-                name="Mixtral 8x7B",
-                id="mixtral-8x7b-32768",
-                context_length=32768,
-                description="Great for reasoning"
+                description="Super fast, good quality - RECOMMENDED"
             ),
             GroqModel(
                 name="Gemma 2 9B",
                 id="gemma2-9b-it",
                 context_length=8192,
                 description="Google's efficient model"
+            ),
+            GroqModel(
+                name="Mixtral 8x7B",
+                id="mixtral-8x7b-32768",
+                context_length=32768,
+                description="Great for reasoning"
             )
         ]
+        
+        # Use reliable working model
+        self.current_model = "llama-3.1-8b-instant"
         
         self.headers = {
             'Authorization': f'Bearer {self.api_key}',
@@ -99,6 +96,27 @@ class GroqPhilosopherChat:
                 'voice': 'deeply introspective, exploring moral complexity and human suffering',
                 'concepts': 'suffering as path to truth, free will, faith vs reason, redemption',
                 'approach': 'finds profound meaning in human struggle and moral choice'
+            },
+            'socrates': {
+                'name': 'Socrates',
+                'style': 'classical philosopher and master of inquiry',
+                'voice': 'humble yet probing, asking penetrating questions that reveal hidden assumptions and contradictions',
+                'concepts': 'self-knowledge, virtue as knowledge, the unexamined life, wisdom through ignorance',
+                'approach': 'uses questions to guide others to discover truth within themselves'
+            },
+            'kafka': {
+                'name': 'Franz Kafka',
+                'style': 'existential writer and philosopher of the absurd',
+                'voice': 'anxious and perplexing, revealing the nightmarish absurdity of modern existence through bureaucratic labyrinths',
+                'concepts': 'alienation, transformation, guilt, bureaucratic absurdity, the trial of existence',
+                'approach': 'exposes the kafkaesque nature of human condition through disturbing metaphors and surreal scenarios'
+            },
+            'cioran': {
+                'name': 'Emil Cioran',
+                'style': 'pessimistic philosopher and master of aphorisms',
+                'voice': 'darkly poetic and brutally honest, dissecting existence with surgical precision and bitter lucidity',
+                'concepts': 'the trouble with being born, insomnia as enlightenment, despair as clarity, the inconvenience of existence',
+                'approach': 'embraces pessimism as a form of intellectual honesty and finds beauty in hopelessness'
             }
         }
     
@@ -140,6 +158,27 @@ Respond as {persona['name']} in 200-400 words:"""
             context_parts.append(f"[{i}] From {source_name}: '{title}'\n    {content}...")
             
         return "\n\n".join(context_parts)
+    
+    def create_fast_prompt(self, question: str, persona_name: str, context: List[Dict]) -> str:
+        """Create optimized prompt for fast responses"""
+        persona = self.personas.get(persona_name, self.personas['camus'])
+        
+        # Minimal context formatting for speed
+        context_text = ""
+        if context:
+            best_source = context[0]
+            context_text = f"Current discussion: {best_source.get('content', '')[:100]}..."
+        
+        # Shorter, focused prompt
+        fast_prompt = f"""You embody {persona['name']}'s philosophical perspective: {persona['style']}.
+
+{context_text}
+
+Question: "{question}"
+
+Share your philosophical insights in 150-250 words, drawing from {persona['concepts']}. Write naturally without stating your identity:"""
+
+        return fast_prompt
     
     def query_groq_model(self, model: GroqModel, prompt: str) -> Optional[str]:
         """Query Groq API with a specific model"""
@@ -186,18 +225,33 @@ Respond as {persona['name']} in 200-400 words:"""
             
         return None
     
-    def chat(self, question: str, persona: str = 'camus') -> str:
-        """Generate philosophical response using Groq with internet context"""
+    def chat(self, question: str, persona: str = 'camus', fast_mode: bool = True) -> str:
+        """Generate philosophical response using Groq with internet context
+        
+        Args:
+            question: User's philosophical question
+            persona: Philosopher persona (camus, nietzsche, etc.)
+            fast_mode: If True, uses optimized search for 2-3s responses
+        """
         try:
-            # Step 1: Get internet context
-            print(f"🔍 Searching internet for: {question}")
-            internet_sources = self.search_engine.search_philosophy_content(question)
-            print(f"✅ Found {len(internet_sources)} sources")
+            # Step 1: Get internet context (fast or comprehensive)
+            if fast_mode:
+                print(f"⚡ Fast search for: {question}")
+                internet_sources = self.search_engine.search_philosophy_content(question, persona)
+                print(f"✅ Found {len(internet_sources)} sources in fast mode")
+            else:
+                print(f"🔍 Deep search for: {question}")
+                # Use the original slower comprehensive search
+                internet_sources = self._comprehensive_search(question, persona)
+                print(f"✅ Found {len(internet_sources)} sources")
             
-            # Step 2: Create sophisticated prompt
-            prompt = self.create_philosophical_prompt(question, persona, internet_sources)
+            # Step 2: Create optimized prompt
+            if fast_mode:
+                prompt = self.create_fast_prompt(question, persona, internet_sources)
+            else:
+                prompt = self.create_philosophical_prompt(question, persona, internet_sources)
             
-            # Step 3: Try Groq models in order
+            # Step 3: Try Groq models (start with fastest)
             for model in self.models:
                 response = self.query_groq_model(model, prompt)
                 if response:

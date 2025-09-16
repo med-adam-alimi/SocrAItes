@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, Response
 import logging
 import os
 import uuid
+import json
+import time
 
 # Import all available chat systems for maximum flexibility
 try:
@@ -20,7 +22,7 @@ except ImportError as e:
     INTERNET_RAG_AVAILABLE = False
     logging.warning(f"⚠️ Internet RAG not available: {e}")
 
-# Fallback to AI-enhanced system
+# AI-enhanced system fallback
 try:
     from app.ai_models import AIPhilosopherChat
     AI_ENHANCED_AVAILABLE = True
@@ -31,6 +33,18 @@ except ImportError:
 from app.models_safe import PhilosopherChat as SafePhilosopherChat
 
 main = Blueprint('main', __name__)
+
+# Session management to prevent cookie overflow
+def optimize_session():
+    """Optimize session to prevent cookie overflow"""
+    if 'conversation_history' in session:
+        # Keep only last 10 messages to prevent cookie overflow
+        history = session['conversation_history']
+        if len(history) > 10:
+            session['conversation_history'] = history[-10:]
+    
+    # Clean up old sessions
+    session.permanent = True
 
 # Initialize the best available chat system
 def get_chat_system():
@@ -87,14 +101,17 @@ def chat():
         if 'conversation_id' not in session:
             session['conversation_id'] = str(uuid.uuid4())
         
+        # Optimize session to prevent cookie overflow
+        optimize_session()
+        
         # Log the interaction
         logging.info(f"💭 User ({philosopher}): {user_message}")
         
-        # Generate response using the best available system
+        # Generate response using the best available system with fast mode
         if hasattr(chat_system, 'chat'):
-            # Internet RAG or AI-Enhanced system
-            response = chat_system.chat(user_message, philosopher)
-            generated_by = 'internet_rag' if INTERNET_RAG_AVAILABLE else 'ai_enhanced'
+            # Internet RAG or AI-Enhanced system - ENABLE FAST MODE FOR SPEED
+            response = chat_system.chat(user_message, philosopher, fast_mode=True)
+            generated_by = 'groq_fast' if GROQ_AVAILABLE else 'internet_rag'
         elif hasattr(chat_system, 'generate_response'):
             # AI-Enhanced system alternative
             result = chat_system.generate_response(
@@ -110,15 +127,22 @@ def chat():
             response = chat_system.get_response(user_message, philosopher)
             generated_by = 'template'
         
-        # Store conversation in session
+        # Store conversation in session (optimized)
         if 'conversation' not in session:
             session['conversation'] = []
         
-        session['conversation'].append({
-            'user': user_message,
+        # Only store essential data
+        conversation_entry = {
+            'user': user_message[:200],  # Truncate long messages
             'philosopher': philosopher,
-            'response': response
-        })
+            'response': response[:500] if len(response) > 500 else response  # Truncate long responses
+        }
+        
+        session['conversation'].append(conversation_entry)
+        
+        # Keep only last 5 conversations to prevent overflow
+        if len(session['conversation']) > 5:
+            session['conversation'] = session['conversation'][-5:]
         
         session.modified = True
         
@@ -148,6 +172,69 @@ def chat():
             'generated_by': 'fallback',
             'system_type': 'Fallback'
         })
+
+@main.route('/api/chat/stream', methods=['POST'])
+def chat_stream():
+    """Stream chat responses for real-time typing effect"""
+    try:
+        data = request.get_json()
+        user_message = data['message'].strip()
+        philosopher = data.get('philosopher', 'neutral').lower()
+        
+        if not user_message:
+            return jsonify({'error': 'Message cannot be empty'}), 400
+        
+        # Generate full response first
+        chat_system = get_chat_system()
+        
+        if hasattr(chat_system, 'chat'):
+            full_response = chat_system.chat(user_message, philosopher, fast_mode=True)  # Fast mode for streaming
+        else:
+            full_response = "I apologize, but streaming is temporarily unavailable."
+        
+        def generate_stream():
+            """Generate streaming response"""
+            words = full_response.split(' ')
+            current_text = ""
+            
+            for i, word in enumerate(words):
+                current_text += word
+                if i < len(words) - 1:
+                    current_text += " "
+                
+                # Create streaming chunk
+                chunk = {
+                    'type': 'content',
+                    'text': current_text,
+                    'word': word,
+                    'progress': (i + 1) / len(words),
+                    'philosopher': philosopher
+                }
+                
+                yield f"data: {json.dumps(chunk)}\n\n"
+                time.sleep(0.05)  # 50ms delay between words for natural typing
+            
+            # Send completion signal
+            final_chunk = {
+                'type': 'complete',
+                'text': full_response,
+                'philosopher': philosopher
+            }
+            yield f"data: {json.dumps(final_chunk)}\n\n"
+        
+        return Response(
+            generate_stream(),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
+            }
+        )
+    
+    except Exception as e:
+        logging.error(f"Streaming error: {str(e)}")
+        return jsonify({'error': 'Streaming failed'}), 500
 
 @main.route('/api/philosophers')
 def get_philosophers():
@@ -202,12 +289,33 @@ def get_philosophers():
             'specialties': ['Virtue Ethics', 'Practical Wisdom', 'Human Flourishing'],
             'key_concepts': ['Virtue Ethics', 'Practical Wisdom', 'Human Flourishing']
         },
+        'socrates': {
+            'name': 'Socrates',
+            'description': 'Classical Greek philosopher, father of Western philosophy and the Socratic method',
+            'period': '470-399 BCE',
+            'specialties': ['Socratic Method', 'Self-Knowledge', 'Virtue Ethics'],
+            'key_concepts': ['Know Thyself', 'Unexamined Life', 'Virtue is Knowledge', 'Socratic Irony']
+        },
         'marcus': {
             'name': 'Marcus Aurelius',
             'description': 'Stoic emperor-philosopher emphasizing virtue and acceptance',
             'period': '121-180 CE',
             'specialties': ['Stoicism', 'Virtue', 'Inner Peace'],
             'key_concepts': ['Stoicism', 'Virtue', 'Inner Peace']
+        },
+        'kafka': {
+            'name': 'Franz Kafka',
+            'description': 'Czech writer exploring existential anxiety, alienation, and bureaucratic absurdity',
+            'period': '1883-1924',
+            'specialties': ['Existential Anxiety', 'Alienation', 'Absurdity', 'Bureaucracy'],
+            'key_concepts': ['The Absurd', 'Metamorphosis', 'Guilt', 'Isolation', 'Kafkaesque']
+        },
+        'cioran': {
+            'name': 'Emil Cioran',
+            'description': 'Romanian-French philosopher known for his pessimistic insights and aphoristic style',
+            'period': '1911-1995',
+            'specialties': ['Pessimism', 'Aphorisms', 'Despair', 'Insomnia'],
+            'key_concepts': ['The Trouble with Being Born', 'Lucidity', 'Nihilism', 'Sleeplessness']
         },
         'neutral': {
             'name': 'Philosophy Guide',
