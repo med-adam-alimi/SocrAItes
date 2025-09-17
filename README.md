@@ -307,8 +307,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - **Repository**: [GitHub](https://github.com/med-adam-alimi/SocrAItes)
-- **Demo**: [Live Demo](https://your-demo-link.com)
-- **Documentation**: [Wiki](https://github.com/med-adam-alimi/SocrAItes/wiki)
+
 
 ## 🙏 Acknowledgments
 
