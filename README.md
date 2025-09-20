@@ -2,7 +2,13 @@
 
 **Experience philosophical wisdom through AI-powered conversations with history's greatest thinkers.**
 
-SocrAItes is a sophisticated Flask web application that combines **Retrieval Augmented Generation (RAG)** with **modern AI models** to create authentic philosophical discussions. Engage with AI-powered philosopher personas that draw from real philosophical texts and contemporary internet sources to provide thoughtful, contextually rich responses.
+SocrAItes is a sophisticated Flask web application that combines **Retrieval Augmented Generation (RAG)** with **modern AI models** to create authentic philosophical discussions. Engage with AI-powered philosopher personas that draw from real philosophical texts and contemporary internet sources to provide thoughtful, contextually rich responses. 
+
+## Demo Video
+
+Watch the full demo video on Google Drive:  
+[Watch Demo](https://drive.google.com/file/d/1SvIzlAV-baU0OraCNcemWy41XT9axtV4/view?usp=drive_link)
+
 
 ## 🏗️ Backend Architecture
 
