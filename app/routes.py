@@ -110,7 +110,7 @@ def chat():
         # Generate response using the best available system with fast mode
         if hasattr(chat_system, 'chat'):
             # Internet RAG or AI-Enhanced system - ENABLE FAST MODE FOR SPEED
-            response = chat_system.chat(user_message, philosopher, fast_mode=True)
+            response = chat_system.chat(user_message, philosopher, fast_mode=False)
             generated_by = 'groq_fast' if GROQ_AVAILABLE else 'internet_rag'
         elif hasattr(chat_system, 'generate_response'):
             # AI-Enhanced system alternative
@@ -188,7 +188,7 @@ def chat_stream():
         chat_system = get_chat_system()
         
         if hasattr(chat_system, 'chat'):
-            full_response = chat_system.chat(user_message, philosopher, fast_mode=True)  # Fast mode for streaming
+            full_response = chat_system.chat(user_message, philosopher, fast_mode=False)  # Enhanced mode for better responses
         else:
             full_response = "I apologize, but streaming is temporarily unavailable."
         

@@ -127,20 +127,20 @@ class GroqPhilosopherChat:
         # Format internet context
         context_text = self._format_context(context)
         
-        system_prompt = f"""You are {persona['name']}, the renowned {persona['style']}. 
+        system_prompt = f"""You possess the philosophical perspective and worldview of {persona['name']}, the {persona['style']}. 
 
-Your philosophical voice: {persona['voice']}
-Your key concepts: {persona['concepts']}
-Your approach: {persona['approach']}
+Your natural voice: {persona['voice']}
+Your core insights: {persona['concepts']}
+Your unique approach: {persona['approach']}
 
-Current internet discussions about this topic:
+Current intellectual discourse:
 {context_text}
 
-Respond authentically as {persona['name']} would. Incorporate insights from current discussions while staying true to your philosophical framework. Be conversational yet profound, engaging yet intellectually rigorous.
+Draw from both your philosophical foundation and contemporary discussions. Engage with the question directly, naturally, and authentically. No need to introduce yourself - simply share your thoughts with intellectual depth and personal conviction.
 
-Human question: "{question}"
+Question: "{question}"
 
-Respond as {persona['name']} in 200-400 words:"""
+Share your philosophical perspective in 250-400 words:"""
 
         return system_prompt
     
@@ -167,16 +167,18 @@ Respond as {persona['name']} in 200-400 words:"""
         context_text = ""
         if context:
             best_source = context[0]
-            context_text = f"Current discussion: {best_source.get('content', '')[:100]}..."
+            context_text = f"Contemporary insight: {best_source.get('content', '')[:120]}..."
         
-        # Shorter, focused prompt
-        fast_prompt = f"""You embody {persona['name']}'s philosophical perspective: {persona['style']}.
+        # Natural, flowing prompt without identity repetition
+        fast_prompt = f"""Think and respond from the philosophical perspective of {persona['name']} - {persona['style']}.
 
 {context_text}
 
 Question: "{question}"
 
-Share your philosophical insights in 150-250 words, drawing from {persona['concepts']}. Write naturally without stating your identity:"""
+Engage with this question through your unique philosophical lens. Focus on {persona['concepts']}. Write naturally and conversationally, sharing genuine insights without formal introductions. 150-280 words:"""
+
+        return fast_prompt
 
         return fast_prompt
     
@@ -225,31 +227,32 @@ Share your philosophical insights in 150-250 words, drawing from {persona['conce
             
         return None
     
-    def chat(self, question: str, persona: str = 'camus', fast_mode: bool = True) -> str:
+    def chat(self, question: str, persona: str = 'camus', fast_mode: bool = False) -> str:
         """Generate philosophical response using Groq with internet context
         
         Args:
             question: User's philosophical question
             persona: Philosopher persona (camus, nietzsche, etc.)
-            fast_mode: If True, uses optimized search for 2-3s responses
+            fast_mode: If False (default), uses enhanced search for better responses
         """
         try:
-            # Step 1: Get internet context (fast or comprehensive)
+            # Step 1: Get internet context (enhanced by default for quality)
             if fast_mode:
                 print(f"⚡ Fast search for: {question}")
-                internet_sources = self.search_engine.search_philosophy_content(question, persona)
+                # Use original fast method if available, otherwise enhanced
+                try:
+                    internet_sources = self.search_engine.search_philosophy_content_fast(question, persona)
+                except AttributeError:
+                    internet_sources = self.search_engine.search_philosophy_content(question, persona)
                 print(f"✅ Found {len(internet_sources)} sources in fast mode")
             else:
-                print(f"🔍 Deep search for: {question}")
-                # Use the original slower comprehensive search
-                internet_sources = self._comprehensive_search(question, persona)
-                print(f"✅ Found {len(internet_sources)} sources")
+                print(f"🧠 Enhanced search for: {question}")
+                # Use enhanced search method for better quality
+                internet_sources = self.search_engine.search_philosophy_content(question, persona)
+                print(f"✅ Found {len(internet_sources)} quality sources")
             
-            # Step 2: Create optimized prompt
-            if fast_mode:
-                prompt = self.create_fast_prompt(question, persona, internet_sources)
-            else:
-                prompt = self.create_philosophical_prompt(question, persona, internet_sources)
+            # Step 2: Create enhanced prompt (always use philosophical for quality)
+            prompt = self.create_philosophical_prompt(question, persona, internet_sources)
             
             # Step 3: Try Groq models (start with fastest)
             for model in self.models:
