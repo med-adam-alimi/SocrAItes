@@ -50,7 +50,7 @@ SocrAItes is a sophisticated Flask web application that combines **Retrieval Aug
 │           ↓              ↓                   ↓               ↓  │
 │     • Internet Sources • Local Texts     • Philosopher    • Stream │
 │     • Fast Mode (3s)   • FAISS DB        • Persona       • Response │
-│     • 3-5 Sources      • Embeddings      • Optimized     • Browser │
+│     • 5-8 Sources      • Embeddings      • Optimized     • Browser │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -89,8 +89,7 @@ SocrAItes is a sophisticated Flask web application that combines **Retrieval Aug
 ## 🆕 Latest Improvements (September 2025)
 
 ### 🎯 **Enhanced Conversation Quality**
-- **Fixed Repetitive Responses**: Eliminated annoying "As Friedrich Nietzsche" repetition 
-- **Natural Voice**: Each philosopher now speaks authentically without constant self-introduction
+- **Fixed Repetitive Responses**: Eliminated annoying  repetition 
 - **Improved Prompts**: More engaging and contextual responses that flow naturally
 
 ### 🧠 **Advanced RAG Engine** 
