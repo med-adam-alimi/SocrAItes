@@ -137,6 +137,7 @@ Current intellectual discourse:
 {context_text}
 
 Draw from both your philosophical foundation and contemporary discussions. Engage with the question directly, naturally, and authentically. No need to introduce yourself - simply share your thoughts with intellectual depth and personal conviction.
+Respond strictly in clear English only.
 
 Question: "{question}"
 
@@ -176,7 +177,7 @@ Share your philosophical perspective in 250-400 words:"""
 
 Question: "{question}"
 
-Engage with this question through your unique philosophical lens. Focus on {persona['concepts']}. Write naturally and conversationally, sharing genuine insights without formal introductions. 150-280 words:"""
+Engage with this question through your unique philosophical lens. Focus on {persona['concepts']}. Write naturally and conversationally, sharing genuine insights without formal introductions. Respond strictly in clear English only. 150-280 words:"""
 
         return fast_prompt
 

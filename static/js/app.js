@@ -2,6 +2,10 @@
 class SocrAItesChat {
     constructor() {
         this.currentPhilosopher = 'socrates';
+        this.outputMode = 'text';
+        this.currentAudio = null;
+        this.lastAudioUrl = null;
+        this.lastVoiceText = '';
         this.isLoading = false;
         this.conversations = [];
         this.init();
@@ -40,6 +44,18 @@ class SocrAItesChat {
                 this.currentPhilosopher = e.target.value;
                 this.updatePhilosopher();
             });
+        }
+
+        const outputModeSelect = document.getElementById('outputMode');
+        if (outputModeSelect) {
+            outputModeSelect.addEventListener('change', (e) => {
+                this.outputMode = e.target.value;
+            });
+        }
+
+        const replayButton = document.getElementById('replayVoice');
+        if (replayButton) {
+            replayButton.addEventListener('click', () => this.replayLastVoice());
         }
     }
 
@@ -170,6 +186,7 @@ class SocrAItesChat {
     async sendMessage() {
         const input = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendMessage');
+        const outputModeSelect = document.getElementById('outputMode');
         
         if (!input || !sendButton) {
             console.error('Input elements not found');
@@ -177,6 +194,10 @@ class SocrAItesChat {
         }
 
         const message = input.value.trim();
+
+        if (outputModeSelect) {
+            this.outputMode = outputModeSelect.value;
+        }
 
         if (!message || this.isLoading) return;
 
@@ -197,7 +218,7 @@ class SocrAItesChat {
             // Create empty AI message for streaming
             const chatMessages = document.getElementById('chatMessages');
             const aiMessageElement = this.createMessage('ai', '', this.getPhilosopherName());
-            const contentElement = aiMessageElement.querySelector('.message-content');
+            const textElement = aiMessageElement.querySelector('.message-text');
             
             // Remove typing indicator and add AI message
             if (typingIndicator && typingIndicator.parentNode) {
@@ -205,6 +226,11 @@ class SocrAItesChat {
             }
             chatMessages.appendChild(aiMessageElement);
             this.scrollToBottom();
+
+            if (this.outputMode === 'voice') {
+                await this.handleVoiceModeResponse(message, aiMessageElement, textElement);
+                return;
+            }
 
             // Start streaming
             const response = await fetch('/api/chat/stream', {
@@ -226,6 +252,7 @@ class SocrAItesChat {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
+            let streamCompleted = false;
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -243,18 +270,29 @@ class SocrAItesChat {
                             
                             if (data.type === 'content') {
                                 // Update content with typing effect
-                                contentElement.textContent = data.text;
+                                textElement.textContent = data.text;
                                 this.scrollToBottom();
                             } else if (data.type === 'complete') {
                                 // Final update
-                                contentElement.textContent = data.text;
+                                textElement.textContent = data.text;
                                 this.scrollToBottom();
+                                streamCompleted = true;
                                 break;
                             }
                         } catch (e) {
                             console.warn('Failed to parse streaming data:', e);
                         }
                     }
+                }
+
+                // Stop waiting for more chunks once completion event is received.
+                if (streamCompleted) {
+                    try {
+                        await reader.cancel();
+                    } catch (cancelError) {
+                        console.warn('Reader cancel warning:', cancelError);
+                    }
+                    break;
                 }
             }
 
@@ -334,6 +372,16 @@ class SocrAItesChat {
         meta.className = 'message-meta';
         meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        if (type === 'ai') {
+            const voiceButton = document.createElement('button');
+            voiceButton.className = 'message-voice-button';
+            voiceButton.type = 'button';
+            voiceButton.textContent = 'Play Voice';
+            voiceButton.style.display = 'none';
+            voiceButton.disabled = true;
+            meta.appendChild(voiceButton);
+        }
+
         content.appendChild(messageText);
         content.appendChild(meta);
         messageDiv.appendChild(avatar);
@@ -395,6 +443,198 @@ class SocrAItesChat {
         if (chatMessages) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+    }
+
+    async handleVoiceModeResponse(message, aiMessageElement, textElement) {
+        try {
+            textElement.textContent = 'Thinking...';
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    philosopher: this.currentPhilosopher
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const responseText = data.response || 'I could not generate a response.';
+            textElement.textContent = responseText;
+            await this.prepareVoiceForMessage(aiMessageElement, responseText, true);
+            this.scrollToBottom();
+        } catch (error) {
+            console.error('Voice mode error:', error);
+            textElement.textContent = 'I apologize, but voice generation failed for this response.';
+            const voiceButton = aiMessageElement.querySelector('.message-voice-button');
+            if (voiceButton) {
+                voiceButton.style.display = 'inline-flex';
+                voiceButton.disabled = true;
+                voiceButton.textContent = 'Voice unavailable';
+            }
+        }
+    }
+
+    async prepareVoiceForMessage(aiMessageElement, responseText, autoPlay) {
+        const voiceButton = aiMessageElement.querySelector('.message-voice-button');
+        if (!voiceButton) {
+            return;
+        }
+
+        voiceButton.style.display = 'inline-flex';
+        voiceButton.disabled = true;
+        voiceButton.textContent = 'Generating voice...';
+
+        const audioPayload = await this.requestVoiceAudio(responseText);
+        if (!audioPayload) {
+            voiceButton.textContent = 'Voice unavailable';
+            return;
+        }
+
+        const { audioUrl, sourceText } = audioPayload;
+        voiceButton.disabled = false;
+        voiceButton.textContent = 'Play Voice';
+
+        voiceButton.onclick = async () => {
+            const played = await this.playAudioFromUrl(audioUrl, sourceText);
+            if (played) {
+                voiceButton.textContent = 'Replay Voice';
+            }
+        };
+
+        if (autoPlay) {
+            const played = await this.playAudioFromUrl(audioUrl, sourceText);
+            if (played) {
+                voiceButton.textContent = 'Replay Voice';
+            }
+        }
+    }
+
+    async requestVoiceAudio(text) {
+        try {
+            const controller = new AbortController();
+            const timeoutMs = 70000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            const response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`TTS HTTP error: ${response.status}`);
+            }
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            this.lastAudioUrl = audioUrl;
+            this.lastVoiceText = text;
+            this.updateReplayButtonState();
+
+            return { audioUrl, sourceText: text };
+        } catch (error) {
+            console.warn('TTS generation failed:', error);
+            return null;
+        }
+    }
+
+    async playAudioFromUrl(audioUrl, sourceText) {
+        try {
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+            }
+
+            const audio = new Audio(audioUrl);
+            this.currentAudio = audio;
+
+            try {
+                await audio.play();
+                return true;
+            } catch (playError) {
+                console.warn('Autoplay blocked, using browser fallback voice:', playError);
+                return this.playBrowserMaleVoice(sourceText);
+            }
+        } catch (error) {
+            console.warn('Audio playback failed:', error);
+            return this.playBrowserMaleVoice(sourceText);
+        }
+    }
+
+    playBrowserMaleVoice(text) {
+        try {
+            if (!window.speechSynthesis) {
+                return false;
+            }
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance((text || '').slice(0, 2500));
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 0.72;
+            utterance.volume = 1.0;
+
+            const voices = window.speechSynthesis.getVoices() || [];
+            const maleVoice = voices.find((voice) => {
+                const name = (voice.name || '').toLowerCase();
+                const lang = (voice.lang || '').toLowerCase();
+                return (
+                    lang.startsWith('en') &&
+                    (name.includes('david') || name.includes('guy') || name.includes('male') || name.includes('christopher') || name.includes('roger'))
+                );
+            });
+
+            if (maleVoice) {
+                utterance.voice = maleVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+            return true;
+        } catch (fallbackError) {
+            console.warn('Browser male voice fallback failed:', fallbackError);
+            return false;
+        }
+    }
+
+    async replayLastVoice() {
+        try {
+            if (!this.lastAudioUrl) {
+                return;
+            }
+
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+            }
+
+            const replayAudio = new Audio(this.lastAudioUrl);
+            this.currentAudio = replayAudio;
+            await replayAudio.play();
+        } catch (error) {
+            console.warn('Replay failed:', error);
+        }
+    }
+
+    updateReplayButtonState() {
+        const replayButton = document.getElementById('replayVoice');
+        if (!replayButton) {
+            return;
+        }
+
+        replayButton.disabled = !this.lastAudioUrl;
     }
 }
 

@@ -96,6 +96,29 @@ body {
     outline: none;
 }
 
+.voice-replay-button {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 0.5rem 0.85rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-replay-button:hover:not(:disabled),
+.voice-replay-button:focus:not(:disabled) {
+    border-color: var(--border-accent);
+    background: var(--bg-primary);
+    outline: none;
+}
+
+.voice-replay-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Chat Container */
 .chat-container {
     flex: 1;
@@ -188,6 +211,29 @@ body {
     color: var(--text-secondary);
     margin-top: 0.5rem;
     opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.message-voice-button {
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.message-voice-button:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--border-accent);
+}
+
+.message-voice-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Input Area */

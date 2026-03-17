@@ -26,6 +26,14 @@
                         <option value="kafka">Franz Kafka</option>
                         <option value="cioran">Emil Cioran</option>
                     </select>
+                    <label for="outputMode" style="color: var(--text-secondary); font-size: 0.9rem;">Output:</label>
+                    <select id="outputMode" class="philosopher-dropdown">
+                        <option value="text">Text</option>
+                        <option value="voice">Voice</option>
+                    </select>
+                    <button id="replayVoice" class="voice-replay-button" type="button" disabled>
+                        Replay Voice
+                    </button>
                 </div>
             </div>
         </header>

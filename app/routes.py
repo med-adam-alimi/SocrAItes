@@ -4,6 +4,8 @@ import os
 import uuid
 import json
 import time
+import asyncio
+from io import BytesIO
 
 # Import all available chat systems for maximum flexibility
 try:
@@ -31,6 +33,12 @@ except ImportError:
 
 # Ultimate fallback to safe system
 from app.models_safe import PhilosopherChat as SafePhilosopherChat
+
+try:
+    import edge_tts
+    EDGE_TTS_AVAILABLE = True
+except ImportError:
+    EDGE_TTS_AVAILABLE = False
 
 main = Blueprint('main', __name__)
 
@@ -184,11 +192,24 @@ def chat_stream():
         if not user_message:
             return jsonify({'error': 'Message cannot be empty'}), 400
         
-        # Generate full response first
+        # Generate full response first (supports all backend modes)
         chat_system = get_chat_system()
-        
+
+        if 'conversation_id' not in session:
+            session['conversation_id'] = str(uuid.uuid4())
+
         if hasattr(chat_system, 'chat'):
             full_response = chat_system.chat(user_message, philosopher, fast_mode=False)  # Enhanced mode for better responses
+        elif hasattr(chat_system, 'generate_response'):
+            result = chat_system.generate_response(
+                user_message=user_message,
+                philosopher=philosopher,
+                context=[],
+                conversation_id=session['conversation_id']
+            )
+            full_response = result.get('message', "I apologize, but I couldn't generate a response.")
+        elif hasattr(chat_system, 'get_response'):
+            full_response = chat_system.get_response(user_message, philosopher)
         else:
             full_response = "I apologize, but streaming is temporarily unavailable."
         
@@ -380,7 +401,8 @@ def system_status():
             'academic_sources': INTERNET_RAG_AVAILABLE,
             'current_events': INTERNET_RAG_AVAILABLE,
             'ai_generation': AI_ENHANCED_AVAILABLE or INTERNET_RAG_AVAILABLE,
-            'template_fallback': True
+            'template_fallback': True,
+            'tts_available': EDGE_TTS_AVAILABLE
         },
         'model_info': {
             'primary_model': os.getenv('PRIMARY_MODEL', 'meta-llama/Llama-2-70b-chat-hf'),
@@ -388,3 +410,50 @@ def system_status():
             'search_enabled': os.getenv('USE_INTERNET_SEARCH', 'true').lower() == 'true'
         }
     })
+
+
+@main.route('/api/tts', methods=['POST'])
+def text_to_speech():
+    """Convert chat text to speech using a single deep male voice."""
+    if not EDGE_TTS_AVAILABLE:
+        return jsonify({'error': 'TTS dependency not installed. Install edge-tts.'}), 503
+
+    try:
+        data = request.get_json() or {}
+        text = (data.get('text') or '').strip()
+
+        if not text:
+            return jsonify({'error': 'Text is required'}), 400
+
+        # Keep latency manageable and avoid oversized payloads.
+        max_chars = 2500
+        text = text[:max_chars]
+
+        async def synthesize_audio(input_text: str) -> bytes:
+            communicate = edge_tts.Communicate(
+                text=input_text,
+                voice='en-US-ChristopherNeural',
+                rate='-6%',
+                pitch='-8Hz'
+            )
+
+            audio_buffer = bytearray()
+            async for chunk in communicate.stream():
+                if chunk.get('type') == 'audio':
+                    audio_buffer.extend(chunk.get('data', b''))
+
+            return bytes(audio_buffer)
+
+        audio_data = asyncio.run(asyncio.wait_for(synthesize_audio(text), timeout=45))
+        if not audio_data:
+            return jsonify({'error': 'Failed to generate audio'}), 500
+
+        return Response(
+            BytesIO(audio_data).getvalue(),
+            mimetype='audio/mpeg',
+            headers={'Cache-Control': 'no-cache'}
+        )
+
+    except Exception as e:
+        logging.error(f"TTS error: {str(e)}")
+        return jsonify({'error': 'TTS generation failed'}), 500
