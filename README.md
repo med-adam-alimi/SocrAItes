@@ -316,18 +316,48 @@ SocrAItes/
 └── README.md                 # This file
 ```
 
+## What Is New
+
+The project now supports two clear usage phases:
+
+- Phase 1: Text chat with philosopher personas and RAG-grounded responses
+- Phase 2: Voice mode with generated audio playback and replay controls
+
+## Core Features
+
+- Multi-persona philosophical chat (Camus, Dostoevsky, Nietzsche, Socrates, Kafka, Cioran)
+- RAG pipeline combining local philosophy context and optional internet retrieval
+- Groq-backed response generation for low-latency inference
+- Streaming text chat endpoint for interactive UI updates
+- Voice mode using server-side TTS plus replay controls
+- Safe fallback paths when APIs are unavailable
+
+## Architecture Overview
+
+- Frontend: HTML, CSS, JavaScript single-page chat interface
+- Backend: Flask routes for chat, streaming, metadata, status, and TTS
+- Retrieval: Vector/semantic retrieval from philosophy-focused data
+- Generation: Groq model orchestration with persona prompting
+- Voice: TTS endpoint returning audio/mpeg for client playback and replay
+
+  
+## API Endpoints
+
+- GET / : Main chat UI
+- POST /api/chat : Standard chat response
+- POST /api/chat/stream : Streaming text response
+- GET /api/philosophers : Available personas
+- GET /api/topics : Suggested topics
+- GET /api/status : System capability status
+- POST /api/tts : Text-to-speech audio generation
+- POST /api/clear_conversation : Clear session conversation
+
 ## 🔮 Future Roadmap
 
 ### 🎭 **Multi-Philosopher Debates**
 - **Philosopher vs Philosopher**: Watch Nietzsche debate Camus on existentialism
 - **Panel Discussions**: 3-4 philosophers discussing contemporary issues
 - **Historical Recreations**: Recreate famous philosophical debates with AI
-
-### 🎵 **Voice Integration**
-- **Authentic Voices**: AI-generated voices matching each philosopher's accent/style
-- **Audio Responses**: Listen to Socrates speak in ancient Greek accent
-- **Multilingual Support**: Philosophers speaking in their native languages
-
 ### 🧠 **Advanced AI Features**
 - **Personality Evolution**: Philosophers learn and adapt from conversations
 - **Contextual Memory**: Remember previous discussions across sessions
