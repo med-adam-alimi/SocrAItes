@@ -7,7 +7,7 @@ SocrAItes is a sophisticated Flask web application that combines **Retrieval Aug
 ## Demo Video
 
 Watch the full demo video on Google Drive:  
-[Watch Demo](https://drive.google.com/file/d/1SvIzlAV-baU0OraCNcemWy41XT9axtV4/view?usp=drive_link)
+[Watch Demo](https://drive.google.com/file/d/1O5R8GZbKvcRhe3HgGAG5T-XedN292Cit/view?usp=drive_link)
 
 
 ## 🏗️ Backend Architecture
