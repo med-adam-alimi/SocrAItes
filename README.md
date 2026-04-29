@@ -92,7 +92,7 @@ Watch the full demo video on Google Drive:
 - **Responsive Design**: Perfect on desktop, tablet, and mobile
 - **Session Management**: Optimized conversation history
 
-## 🆕 Latest Improvements (September 2025)
+## 🆕 Latest Improvements
 
 ### 🎯 **Enhanced Conversation Quality**
 - **Fixed Repetitive Responses**: Eliminated annoying  repetition 
